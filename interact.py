@@ -6,16 +6,40 @@ import os
 import numpy as np
 import cv2
 import sys
-
-# 获取当前脚本所在目录
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(current_dir, 'yolov8-face'))
-
-# 导入 YOLO 类
 from ultralytics import YOLO
 
+
+# 获取模型路径
+current_dir = os.path.dirname(os.path.abspath(__file__))
+models_dir = os.path.join(current_dir, "models")
+
+def load_model(model):
+    # 检查是否是绝对路径
+    if os.path.isabs(model):
+        if os.path.isfile(model):
+            return YOLO(model)
+        else:
+            raise FileNotFoundError(f"Model file '{model}' not found.")
+    
+    # 检查是否是相对路径
+    relative_path = os.path.join(current_dir, model)
+    if os.path.isfile(relative_path):
+        return YOLO(relative_path)
+    
+    # 检查是否在 models 目录中
+    model_in_models_dir = os.path.join(models_dir, model)
+    if os.path.isfile(model_in_models_dir):
+        return YOLO(model_in_models_dir)
+    
+    # 在 models 目录中搜索模型文件
+    for root, _, files in os.walk(models_dir):
+        if model in files:
+            return YOLO(os.path.join(root, model))
+
+    raise FileNotFoundError(f"Model file '{model}' not found in '{models_dir}' or specified path.")
+
 # 初始化模型
-model = YOLO('./yolov8n-face-lindevs.pt')  # 使用官方的 YOLOv8 模型文件
+model = load_model("lindevs/yolov8n-face-lindevs.pt")
 
 class FaceDetectionApp:
     def __init__(self, root):
