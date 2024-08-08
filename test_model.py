@@ -2,11 +2,11 @@ from ultralytics import YOLO
 import matplotlib.pyplot as plt
 import cv2
 
-image_path = "C:\\Users\\tony_\\Downloads\\bus.jpg"
+image_path = "data/bus.jpg"
 
 def main():    
     # Load a model
-    model = YOLO("D:\\Cipherxzc\\Projects\\yolo\\yolov8_app\\models\\best.pt")  # build a new model from YAML
+    model = YOLO("models/Cipherxzc/YOLOv8n-face.pt")  # build a new model from YAML
 
     # Predict the image
     results = model(image_path)

@@ -1,106 +1,64 @@
-import cv2
-from PIL import Image
+import argparse
+import os
 import shutil
+import cv2
 
 
-def get_image_size(image_path):
-    with Image.open(image_path) as img:
-        width, height = img.size
-        return width, height
+def process(images, labels, output):
+    annotations = {}
+    with open(labels, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            line = line.rstrip()
+            if line.endswith('.jpg'):
+                filename = os.path.splitext(os.path.basename(line))[0]
+                annotations[filename] = []
 
+                image_path = os.path.join(images, line)
+                shutil.copy2(image_path, output)
+                img = cv2.imread(image_path)
+                height, width, _ = img.shape
 
-def save(boxs, path2):
-    boxs_with_newline = [box + '\n' for box in boxs]
-    with open(path2, "w") as w:
-        w.writelines(boxs_with_newline)
+                continue
 
+            data = line.split(' ')
+            if len(data) == 1:
+                continue
 
-def draw(x_min, y_min, x_max, y_max, img_path):
-    if not all(isinstance(val, int) for val in [x_min, y_min, x_max, y_max]):
-        x_min = int(x_min)
-        y_min = int(y_min)
-        x_max = int(x_max)
-        y_max = int(y_max)
-    img = cv2.imread(img_path)
-    cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-    # 显示图像
-    cv2.imshow("Image with Bounding Boxes", img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+            data = [max(0, int(x)) for x in line.split(' ')]
+            if data[0] > width or data[1] > height or data[2] > width or data[3] > height:
+                continue
 
+            cx = (data[0] + data[2] / 2) / width
+            cy = (data[1] + data[3] / 2) / height
+            w = data[2] / width
+            h = data[3] / height
+            label = f'0 {cx} {cy} {w} {h}'
+            if label not in annotations[filename]:
+                annotations[filename].append(label)
 
-# YOLO标签文件和图像路径
-def draw_yolo(label_path, img_path):
-    with open(label_path, 'r') as f:
-        lines = f.readlines()
-    img = cv2.imread(img_path)
-    # 解析标签并绘制边界框
-    for line in lines:
-        class_id, x_center, y_center, box_width, box_height = map(float, line.strip().split())
-        # 将相对坐标转换为绝对坐标
-        img_h, img_w, _ = img.shape
-        x_center_abs = int(x_center * img_w)
-        y_center_abs = int(y_center * img_h)
-        box_width_abs = int(box_width * img_w)
-        box_height_abs = int(box_width * img_h)
-        # 中心坐标
-        print("center_abs", x_center_abs, y_center_abs, box_width_abs, box_height_abs)
-        # 计算边界框的左上角和右下角坐标
-        x_min = int(x_center_abs - box_width_abs / 2)
-        y_min = int(y_center_abs - box_height_abs / 2)
-        x_max = int(x_center_abs + box_width_abs / 2)
-        y_max = int(y_center_abs + box_height_abs / 2)
-
-        # 绘制边界框
-        cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-    # 显示图像
-    cv2.imshow("Image with Bounding Boxes", img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-
-# xmin,ymin 为左上角坐标   xmax,ymax为右上角坐标    img_width为图片宽 img_height为图片高
-def convert(xmin, ymin, xmax, ymax, img_width, img_height):
-    box_width = (xmax - xmin) / img_width
-    box_height = (ymax - ymin) / img_height
-    x_center = (xmax - (xmax - xmin) / 2) / img_width
-    y_center = (ymax - (ymax - ymin) / 2) / img_height
-    box_width = round(box_width, 6)
-    box_height = round(box_height, 6)
-    x_center = round(x_center, 6)
-    y_center = round(y_center, 6)
-    return x_center, y_center, box_width, box_height
-
-
-def handel():
-    rootpath = "datasets/wider_face/train/images/"
-    with open("datasets/wider_face/wider_face_split/wider_face_train_bbx_gt.txt") as r:
-        lines = r.readlines()
-    for i in range(lines.__len__()):
-        line = lines[i].replace("\n", "")
-        if "/" in line:
-            boxs = []
-            img_width, img_height = get_image_size(rootpath + line)
-            face_sum = int(lines[i + 1])
-            for j in range(face_sum):
-                face_line = lines[i + 2 + j]
-                xys = face_line.split(" ")
-                x_center = (int(xys[0]) + int(xys[2]) / 2) / img_width
-                y_center = (int(xys[1]) + int(xys[3]) / 2) / img_height
-                box_width = int(xys[2]) / img_width
-                box_height = int(xys[3]) / img_height
-
-                box_width = round(box_width, 6)
-                box_height = round(box_height, 6)
-                x_center = round(x_center, 6)
-                y_center = round(y_center, 6)
-                boxs.append("0 {} {} {} {}".format(x_center, y_center, box_width, box_height))
-            name = line.split("/")[-1]
-            # 保存标签且复制图像
-            save(boxs, f"datasets/coco8/labels/train/{name.split('.')[0]}.txt")
-            shutil.copy(rootpath + line, f"datasets/coco8/images/train/{name}")
-            # draw_yolo(f"datasets/coco8/labels/train/{name.split('.')[0]}.txt", f"datasets/coco8/images/train/{name}")
+    for filename in annotations:
+        with open(os.path.join(output, filename) + '.txt', 'w') as file:
+            for row in annotations[filename]:
+                file.write(row + '\n')
 
 
 if __name__ == '__main__':
-    handel()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--train-images', default='../datasets/wider_face/train/images')
+    parser.add_argument('--val-images', default='../datasets/wider_face/val/images')
+    parser.add_argument('--train-labels', default='../datasets/wider_face/wider_face_split/wider_face_train_bbx_gt.txt')
+    parser.add_argument('--val-labels', default='../datasets/wider_face/wider_face_split/wider_face_val_bbx_gt.txt')
+    parser.add_argument('--output', default='../datasets/wider_face/')
+    opt = parser.parse_args()
+
+    val_output = os.path.join(opt.output, 'val/labels')
+    train_output = os.path.join(opt.output, 'train/labels')
+
+    if not os.path.exists(val_output):
+        os.makedirs(val_output)
+    if not os.path.exists(train_output):
+        os.makedirs(train_output)
+
+    process(opt.val_images, opt.val_labels, val_output)
+    process(opt.train_images, opt.train_labels, train_output)

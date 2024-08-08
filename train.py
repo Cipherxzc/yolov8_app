@@ -2,7 +2,7 @@ from ultralytics import YOLO
 
 def main():    
     # Load a model
-    model = YOLO("D:\Cipherxzc\Projects\yolo\yolov8_app\config\yolov8m-face.yaml")  # build a new model from YAML
+    model = YOLO("config/yolov8m-face.yaml").load("models/yolov8n.pt")  # build a new model from YAML
 
     # Train the model
     results = model.train(data="config/wider_face.yaml", epochs=120, imgsz=640, batch=16, device=0)

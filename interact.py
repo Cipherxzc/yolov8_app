@@ -6,9 +6,8 @@ import torch
 import os
 
 # 检查并加载YOLOv8模型
-model = YOLO("D:\\Cipherxzc\\Projects\\yolo\\yolov8_app\\models\\yolov8n-face-lindevs.pt")
+model = YOLO("models/Cipherxzc/YOLOv8n-face.pt")
 
-# cuda和pytorch不匹配，用不了gpu，如果你可以请注释掉以下两行
 device = torch.device(0)
 model.to(device)
 
