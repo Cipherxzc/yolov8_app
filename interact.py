@@ -3,9 +3,7 @@ from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 import torch
 import os
-import numpy as np
 import cv2
-import sys
 from ultralytics import YOLO
 
 
@@ -38,8 +36,10 @@ def load_model(model):
 
     raise FileNotFoundError(f"Model file '{model}' not found in '{models_dir}' or specified path.")
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 # 初始化模型
-model = load_model("lindevs/yolov8n-face-lindevs.pt")
+model = load_model("yolov8m-face.pt").to(device)
 
 class FaceDetectionApp:
     def __init__(self, root):
