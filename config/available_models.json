@@ -1,0 +1,9 @@
+{
+    "YOLOv8m-face.pt": "models\\Cipherxzc\\YOLOv8m-face.pt",
+    "YOLOv8n-face.pt": "models\\Cipherxzc\\YOLOv8n-face.pt",
+    "yolov8n-face-lindevs.pt": "models\\lindevs\\yolov8n-face-lindevs.pt",
+    "yolov8s-face-lindevs.pt": "models\\lindevs\\yolov8s-face-lindevs.pt",
+    "yolov8m-face-lindevs.pt": "models\\lindevs\\yolov8m-face-lindevs.pt",
+    "yolov8l-face-lindevs.pt": "models\\lindevs\\yolov8l-face-lindevs.pt",
+    "yolov8s-pose.pt": "models\\yolov8s-pose.pt"
+}
